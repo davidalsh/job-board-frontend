@@ -3,11 +3,15 @@
     <div class="md:col-span-1 p-6 bg-teal-700 rounded-xl">
       <div class="flex space-x-4">
         <input
+          v-model="query"
           type="search"
           placeholder="Find a job..."
           class="w-full px-6 py-4 rounded-xl"
         />
-        <button class="px-6 py-4 bg-teal-900 text-white rounded-xl">
+        <button
+          @click="performSearch"
+          class="px-6 py-4 bg-teal-900 text-white rounded-xl"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -27,18 +31,58 @@
       <hr class="my-6 opacity-30" />
       <h3 class="mt-6 text-xl text-white">Categories</h3>
       <div class="mt-6 space-y-4">
-        <p class="py-4 px-6 text-white rounded-xl">Category 1</p>
-        <p class="py-4 px-6 text-white rounded-xl">Category 2</p>
-        <p class="py-4 px-6 text-white rounded-xl">Category 3</p>
+        <p
+          v-for="jobCategory in jobCategories"
+          :key="jobCategory.id"
+          @click="toggleCategory(jobCategory.id)"
+          class="py-4 px-6 text-white rounded-xl"
+          :class="{
+            'bg-teal-900': selectedCategoriesRef.includes(jobCategory.id),
+          }"
+        >
+          {{ jobCategory.title }}
+        </p>
       </div>
     </div>
 
     <div class="md:col-span-3">
       <div class="space-y-4">
-        <Job />
-        <Job />
-        <Job />
+        <Job v-for="job in jobs" :key="job.id" :job="job" />
       </div>
     </div>
   </div>
 </template>
+
+<script setup>
+const queryRef = ref("");
+let query = "";
+
+const { data: jobCategories } = await useFetch(
+  "http://127.0.0.1:8000/api/v1/jobs/categories/"
+);
+
+const { data: jobs } = await useFetch("http://127.0.0.1:8000/api/v1/jobs/", {
+  query: {
+    query: queryRef,
+  },
+});
+
+const selectedCategoriesRef = computed(() =>
+  selectedCategories.value.join(",")
+);
+const selectedCategories = ref([]);
+
+function toggleCategory(id) {
+  const index = selectedCategories.value.indexOf(id);
+
+  if (index === -1) {
+    selectedCategories.value.push(id);
+  } else {
+    selectedCategories.value.splice(index, 1);
+  }
+}
+
+function performSearch() {
+  queryRef.value = query;
+}
+</script>
